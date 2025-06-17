@@ -1,8 +1,4 @@
-from telegram import Update, ReplyKeyboardMarkup
-from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
 
-from keep_alive import keep_alive  # 👈 запуск Flask-сервера
-keep_alive()  # 👈 активує сервер
 
 TOKEN = "7847656840:AAEoG9zSN9gCmJ25VHzmzqOXtlO7aV14_TI"
 ADMIN_ID = 486443841  # заміни на свій Telegram ID
