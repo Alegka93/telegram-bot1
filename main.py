@@ -1,71 +1,114 @@
+import logging
 from telegram import Update, ReplyKeyboardMarkup
-from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, ContextTypes, filters
+from telegram.ext import (
+    ApplicationBuilder,
+    CommandHandler,
+    MessageHandler,
+    ContextTypes,
+    filters,
+)
+from keep_alive import keep_alive
 
-from keep_alive import keep_alive  # запуск Flask-сервера
-keep_alive()  # активує сервер
-
+# 🔧 Додай свій токен та ID
 TOKEN = "7847656840:AAEoG9zSN9gCmJ25VHzmzqOXtlO7aV14_TI"
-ADMIN_ID = 486443841  # заміни на свій Telegram ID
+ADMIN_ID = 486443841  # ← сюди свій Telegram ID
+
+# Запуск Flask-сервера
+keep_alive()
+
+# Логування
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.INFO
+)
+logger = logging.getLogger(__name__)
 
 user_data = {}
 
-# Обробник команди /start
+def get_main_keyboard():
+    return ReplyKeyboardMarkup(
+        keyboard=[
+            ["📲 Залишити заявку", "📍 Локація сервісу"],
+            ["💬 Зв’язок з майстром"]
+        ],
+        resize_keyboard=True
+    )
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    keyboard = [["📲 Залишити заявку", "📍 Локація сервісу"],
-                ["💬 Зв’язок з майстром"]]
-    reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
+    logger.info(f"User {update.effective_user.id} started the bot.")
     await update.message.reply_text(
         "Привіт! Я бот для запису на ремонт iPhone 📱",
-        reply_markup=reply_markup)
+        reply_markup=get_main_keyboard()
+    )
 
-# Обробник повідомлень
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     text = update.message.text
     uid = update.effective_user.id
 
     if text == "📲 Залишити заявку":
-        await update.message.reply_text("Введи модель iPhone:")
         user_data[uid] = {"step": "model"}
+        await update.message.reply_text("Введи модель iPhone:")
 
     elif text == "📍 Локація сервісу":
-        await update.message.reply_text(
-            "Наша адреса: 📍 м. Львів, вул. Мельника 18 Leoland")
+        await update.message.reply_text("Наша адреса: 📍 м. Львів, вул. Мельника 18 Leoland")
 
     elif text == "💬 Зв’язок з майстром":
         await update.message.reply_text("Напиши нам у Telegram: @Enforcer1")
 
     else:
-        if uid in user_data:
-            step = user_data[uid].get("step")
+        if uid not in user_data:
+            await update.message.reply_text(
+                "Будь ласка, обери одну з кнопок меню або натисни /start для початку.",
+                reply_markup=get_main_keyboard()
+            )
+            return
 
-            if step == "model":
-                user_data[uid]["model"] = text
-                user_data[uid]["step"] = "problem"
-                await update.message.reply_text("Опиши проблему з iPhone:")
+        step = user_data[uid].get("step")
 
-            elif step == "problem":
-                user_data[uid]["problem"] = text
-                user_data[uid]["step"] = "phone"
-                await update.message.reply_text("Введи свій номер телефону:")
+        if step == "model":
+            user_data[uid]["model"] = text
+            user_data[uid]["step"] = "problem"
+            await update.message.reply_text("Опиши проблему з iPhone:")
 
-            elif step == "phone":
-                user_data[uid]["phone"] = text
-                data = user_data[uid]
-                message = (
-                    f"📥 Нова заявка від @{update.effective_user.username or 'Користувач без username'}\n\n"
-                    f"📱 Модель: {data['model']}\n"
-                    f"⚠️ Проблема: {data['problem']}\n"
-                    f"📞 Телефон: {data['phone']}"
-                )
-                await context.bot.send_message(chat_id=ADMIN_ID, text=message)
-                await update.message.reply_text(
-                    "✅ Дякуємо! Майстер скоро зв’яжеться з тобою.")
-                del user_data[uid]
+        elif step == "problem":
+            user_data[uid]["problem"] = text
+            user_data[uid]["step"] = "phone"
+            await update.message.reply_text("Введи свій номер телефону:")
 
-# Запуск бота
-app = ApplicationBuilder().token(TOKEN).build()
-app.add_handler(CommandHandler("start", start))
-app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+        elif step == "phone":
+            user_data[uid]["phone"] = text
+            data = user_data.pop(uid)
 
-print("Бот запущено!")
-app.run_polling()
+            username = update.effective_user.username or "Користувач без username"
+            message = (
+                f"📥 Нова заявка від @{username}\n\n"
+                f"📱 Модель: {data['model']}\n"
+                f"⚠️ Проблема: {data['problem']}\n"
+                f"📞 Телефон: {data['phone']}"
+            )
+            await context.bot.send_message(chat_id=ADMIN_ID, text=message)
+            await update.message.reply_text(
+                "✅ Дякуємо! Майстер скоро зв’яжеться з тобою.",
+                reply_markup=get_main_keyboard()
+            )
+        else:
+            user_data.pop(uid, None)
+            await update.message.reply_text(
+                "Сталася помилка. Будь ласка, почни заново /start",
+                reply_markup=get_main_keyboard()
+            )
+
+async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE):
+    logger.error(msg="Exception while handling an update:", exc_info=context.error)
+    if update and hasattr(update, "message") and update.message:
+        await update.message.reply_text("Сталася помилка. Спробуйте ще раз пізніше.")
+
+if __name__ == "__main__":
+    app = ApplicationBuilder().token(TOKEN).build()
+
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+    app.add_error_handler(error_handler)
+
+    print("Бот запущено!")
+    app.run_polling()
