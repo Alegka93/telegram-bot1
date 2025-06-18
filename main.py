@@ -11,7 +11,7 @@ from telegram.ext import (
 from keep_alive import keep_alive
 
 TOKEN = os.getenv "7847656840:AAEoG9zSN9gCmJ25VHzmzqOXtlO7aV14_TI"
-ADMIN_ID = int(os.getenv "486443841"  # ← перетворення в int
+ADMIN_ID = int os.getenv "486443841"  # ← перетворення в int
 
 keep_alive()
 
