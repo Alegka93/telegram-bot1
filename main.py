@@ -10,11 +10,14 @@ from telegram.ext import (
 )
 from keep_alive import keep_alive
 
+# 🔐 Отримуємо дані з середовища (Render → Environment)
 TOKEN = os.getenv("BOT_TOKEN")
-ADMIN_ID = 486443841
+ADMIN_ID = int(os.getenv("ADMIN_ID"))
 
+# Запускаємо веб-сервер для Render
 keep_alive()
 
+# Логування
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO
@@ -24,11 +27,11 @@ logger = logging.getLogger(__name__)
 user_data = {}
 
 def get_start_keyboard():
-    return ReplyKeyboardMarkup(keyboard=[["🚀 Почати ремонт"]], resize_keyboard=True)
+    return ReplyKeyboardMarkup([["🚀 Почати ремонт"]], resize_keyboard=True)
 
 def get_main_keyboard():
     return ReplyKeyboardMarkup(
-        keyboard=[
+        [
             ["📲 Залишити заявку", "📍 Локація сервісу"],
             ["💬 Зв’язок з майстром"]
         ],
@@ -95,12 +98,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 "✅ Дякуємо! Майстер скоро зв’яжеться з тобою.",
                 reply_markup=get_main_keyboard()
             )
-        else:
-            user_data.pop(uid, None)
-            await update.message.reply_text(
-                "Сталася помилка. Будь ласка, почни заново /start",
-                reply_markup=get_main_keyboard()
-            )
 
 async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE):
     logger.error(msg="Exception while handling an update:", exc_info=context.error)
@@ -112,6 +109,5 @@ if __name__ == "__main__":
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     app.add_error_handler(error_handler)
-
     print("Бот запущено!")
     app.run_polling()
