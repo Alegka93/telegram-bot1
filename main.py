@@ -10,14 +10,12 @@ from telegram.ext import (
 )
 from keep_alive import keep_alive
 
-# 🔐 Отримуємо дані з середовища (Render → Environment)
+# Отримуємо змінні з середовища
 TOKEN = os.getenv("BOT_TOKEN")
 ADMIN_ID = int(os.getenv("ADMIN_ID"))
 
-# Запускаємо веб-сервер для Render
-keep_alive()
+keep_alive()  # запуск веб-сервера
 
-# Логування
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO
@@ -85,7 +83,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         elif step == "phone":
             user_data[uid]["phone"] = text
             data = user_data.pop(uid)
-
             username = update.effective_user.username or "Користувач без username"
             message = (
                 f"📥 Нова заявка від @{username}\n\n"
