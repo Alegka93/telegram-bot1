@@ -11,15 +11,15 @@ from keep_alive import keep_alive
 
 # 🔧 Додай свій токен та ID
 TOKEN = "7847656840:AAEoG9zSN9gCmJ25VHzmzqOXtlO7aV14_TI"
-ADMIN_ID = 486443841  # ← сюди свій Telegram ID
+ADMIN_ID = 486443841  # сюди свій Telegram ID (ціле число)
 
 # Запуск Flask-сервера
 keep_alive()
 
 # Логування
 logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    level=logging.INFO
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    level=logging.INFO,
 )
 logger = logging.getLogger(__name__)
 
@@ -29,16 +29,16 @@ def get_main_keyboard():
     return ReplyKeyboardMarkup(
         keyboard=[
             ["📲 Залишити заявку", "📍 Локація сервісу"],
-            ["💬 Зв’язок з майстром"]
+            ["💬 Зв’язок з майстром"],
         ],
-        resize_keyboard=True
+        resize_keyboard=True,
     )
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     logger.info(f"User {update.effective_user.id} started the bot.")
     await update.message.reply_text(
         "Привіт! Я бот для запису на ремонт iPhone 📱",
-        reply_markup=get_main_keyboard()
+        reply_markup=get_main_keyboard(),
     )
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -50,7 +50,9 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("Введи модель iPhone:")
 
     elif text == "📍 Локація сервісу":
-        await update.message.reply_text("Наша адреса: 📍 м. Львів, вул. Мельника 18 Leoland")
+        await update.message.reply_text(
+            "Наша адреса: 📍 м. Львів, вул. Мельника 18 Leoland"
+        )
 
     elif text == "💬 Зв’язок з майстром":
         await update.message.reply_text("Напиши нам у Telegram: @Enforcer1")
@@ -59,7 +61,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if uid not in user_data:
             await update.message.reply_text(
                 "Будь ласка, обери одну з кнопок меню або натисни /start для початку.",
-                reply_markup=get_main_keyboard()
+                reply_markup=get_main_keyboard(),
             )
             return
 
@@ -88,27 +90,4 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
             await context.bot.send_message(chat_id=ADMIN_ID, text=message)
             await update.message.reply_text(
-                "✅ Дякуємо! Майстер скоро зв’яжеться з тобою.",
-                reply_markup=get_main_keyboard()
-            )
-        else:
-            user_data.pop(uid, None)
-            await update.message.reply_text(
-                "Сталася помилка. Будь ласка, почни заново /start",
-                reply_markup=get_main_keyboard()
-            )
-
-async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE):
-    logger.error(msg="Exception while handling an update:", exc_info=context.error)
-    if update and hasattr(update, "message") and update.message:
-        await update.message.reply_text("Сталася помилка. Спробуйте ще раз пізніше.")
-
-if __name__ == "__main__":
-    app = ApplicationBuilder().token(TOKEN).build()
-
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-    app.add_error_handler(error_handler)
-
-    print("Бот запущено!")
-    app.run_polling()
+                "✅ Дякуємо! Майстер с
