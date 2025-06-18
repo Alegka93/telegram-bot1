@@ -90,4 +90,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
             await context.bot.send_message(chat_id=ADMIN_ID, text=message)
             await update.message.reply_text(
-                "✅ Дякуємо! Майстер с
+    "✅ Дякуємо! Майстер скоро зв’яжеться з тобою.",
+    reply_markup=get_main_keyboard(),
+)
+
