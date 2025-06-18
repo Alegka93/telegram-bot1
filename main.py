@@ -1,4 +1,5 @@
 import logging
+import os
 from telegram import Update, ReplyKeyboardMarkup
 from telegram.ext import (
     ApplicationBuilder,
@@ -9,14 +10,11 @@ from telegram.ext import (
 )
 from keep_alive import keep_alive
 
-# 🔧 Додай свій токен та ID
-TOKEN = "7847656840:AAEoG9zSN9gCmJ25VHzmzqOXtlO7aV14_TI"
-ADMIN_ID = 486443841  # ← заміни на свій Telegram ID
+TOKEN = os.getenv("7847656840:AAEoG9zSN9gCmJ25VHzmzqOXtlO7aV14_TI")
+ADMIN_ID = int(os.getenv("486443841"))  # ← перетворення в int
 
-# Запуск Flask-сервера
 keep_alive()
 
-# Логування
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO
@@ -24,11 +22,9 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 user_data = {}
+
 def get_start_keyboard():
-    return ReplyKeyboardMarkup(
-        keyboard=[["🚀 Почати ремонт"]],
-        resize_keyboard=True
-    )
+    return ReplyKeyboardMarkup(keyboard=[["🚀 Почати ремонт"]], resize_keyboard=True)
 
 def get_main_keyboard():
     return ReplyKeyboardMarkup(
@@ -36,12 +32,6 @@ def get_main_keyboard():
             ["📲 Залишити заявку", "📍 Локація сервісу"],
             ["💬 Зв’язок з майстром"]
         ],
-        resize_keyboard=True
-    )
-
-def get_start_keyboard():
-    return ReplyKeyboardMarkup(
-        keyboard=[["🚀 Почати ремонт"]],
         resize_keyboard=True
     )
 
@@ -119,7 +109,6 @@ async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE):
 
 if __name__ == "__main__":
     app = ApplicationBuilder().token(TOKEN).build()
-
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     app.add_error_handler(error_handler)
